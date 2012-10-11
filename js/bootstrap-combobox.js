@@ -23,7 +23,8 @@
   var Combobox = function ( element, options ) {
     this.options = $.extend({}, $.fn.combobox.defaults, options)
     this.$container = this.setup(element)
-    this.$element = this.$container.find('input')
+    this.$element = this.$container.find('input[type=text]')
+    this.$hidden = this.$container.find('input[type=hidden]')
     this.$button = this.$container.find('.dropdown-toggle')
     this.$target = this.$container.find('select')
     this.matcher = this.options.matcher || this.matcher
@@ -51,6 +52,8 @@
       select.before(combobox)
       select.detach()
       combobox.append(select)
+      combobox.find('input[type=hidden]').attr('name', combobox.find('select').attr('name')).attr('id', combobox.find('select').attr('id'))
+      combobox.find('select').removeAttr('name').removeAttr('id')
       return combobox
     }
 
@@ -62,11 +65,12 @@
         var option = $(this)
         map[option.text()] = option.val()
         source.push(option.text())
-        if(option.attr('selected')) selected = option.html()
+        if(option.attr('selected')) selected = option.text()
       })
       this.map = map
       if (selected) {
         this.$element.val(selected)
+		      this.$hidden.val(map[selected])
         this.$container.addClass('combobox-selected')
         this.selected = true
       }
@@ -77,6 +81,7 @@
     if (this.$container.hasClass('combobox-selected')) {
       this.clearTarget()
       this.$element.val('').focus()
+	     this.$hidden.val('')
     } else {
       if (this.shown) {
         this.hide()
@@ -102,9 +107,12 @@
   , select: function () {
       var val = this.$menu.find('.active').attr('data-value')
       this.$element.val(val)
+	     this.$hidden.val(this.map[val])
       this.$container.addClass('combobox-selected')
-      this.$target.val(this.map[val])
-      this.$target.trigger('change')
+	     if(this.options.customValues === false){
+		        this.$target.val(this.map[val])
+		        this.$target.trigger('change')
+	     }
       this.selected = true
       return this.hide()
     }
@@ -129,6 +137,14 @@
 
       return this.render(items.slice(0, this.options.items)).show()
     }
+	
+  , outsideclick : function(e) {
+		if (this.shown) {
+			if (!($.contains(this.$container[0],e.target))) {
+				this.hide()
+			}
+		}
+	}
 
   // modified typeahead function adding button handling
   , listen: function () {
@@ -147,6 +163,8 @@
 
       this.$button
         .on('click', $.proxy(this.toggle, this))
+
+	     $(document.body).on('click', $.proxy(this.outsideclick, this))
     }
 
   // modified typeahead function to clear on type and prevent on moving around
@@ -186,11 +204,14 @@
       var that = this
       e.stopPropagation()
       e.preventDefault()
-      var val = this.$element.val()
-      if (!this.selected && val != "" ) {
-        this.$element.val("")
-        this.$target.val("").trigger('change')
-      }
+	     if(this.options.customValues === false){
+		        var val = this.$element.val()
+		        if (!this.selected && val != "" ) {
+			           this.$element.val("")
+			           this.$hidden.val("")
+			           this.$target.val("").trigger('change')
+		        }
+	  }
       if (this.shown) {
         setTimeout(function () { that.hide() }, 150)
       }
@@ -203,18 +224,19 @@
   $.fn.combobox = function ( option ) {
     return this.each(function () {
       var $this = $(this)
-        , data = $this.data('combobox')
+        , data
         , options = typeof option == 'object' && option
-      if(!data) $this.data('combobox', (data = new Combobox(this, options)))
+      $this.data('combobox', (data = new Combobox(this, options)))
       if (typeof option == 'string') data[option]()
     })
   }
 
   $.fn.combobox.defaults = {
-  template: '<div class="combobox-container"><input type="text" autocomplete="off" /><span class="add-on btn dropdown-toggle" data-dropdown="dropdown"><span class="caret"/><span class="combobox-clear"><i class="icon-remove"/></span></span></div>'
+  template: '<span class="combobox-container"><input type="text" autocomplete="off" /><input type="hidden" autocomplete="off" /><span class="add-on btn dropdown-toggle" data-dropdown="dropdown"><span class="caret"/><span class="combobox-clear"><i class="icon-remove"/></span></span></span>'
   , menu: '<ul class="typeahead typeahead-long dropdown-menu"></ul>'
   , item: '<li><a href="#"></a></li>'
   , placeholder: null
+  , customValues: false
   }
 
   $.fn.combobox.Constructor = Combobox
