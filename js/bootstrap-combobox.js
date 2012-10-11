@@ -146,6 +146,10 @@
 		}
 	}
 
+, change: function(e) {
+	  this.$hidden.val(this.$element.val())
+  }
+
   // modified typeahead function adding button handling
   , listen: function () {
       this.$element
@@ -164,7 +168,10 @@
       this.$button
         .on('click', $.proxy(this.toggle, this))
 
-	     $(document.body).on('click', $.proxy(this.outsideclick, this))
+      this.$target
+	.on('change', $.proxy(this.change, this))
+
+      $(document.body).on('click', $.proxy(this.outsideclick, this))
     }
 
   // modified typeahead function to clear on type and prevent on moving around
