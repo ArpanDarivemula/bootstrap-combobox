@@ -147,7 +147,10 @@
 	}
 
 , change: function(e) {
-	  this.$hidden.val(this.$element.val())
+	  if(typeof this.map[this.$element.val()] === 'undefined')
+		  this.$hidden.val(this.$element.val())
+	   else
+		  this.$hidden.val(this.map[this.$element.val()])
   }
 
   // modified typeahead function adding button handling
