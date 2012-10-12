@@ -180,7 +180,6 @@
   // modified typeahead function to clear on type and prevent on moving around
   , keyup: function (e) {
       switch(e.keyCode) {
-        case 40: // down arrow
         case 39: // right arrow
         case 38: // up arrow
         case 37: // left arrow
@@ -199,6 +198,10 @@
           if (!this.shown) return
           this.hide()
           break
+
+	case 40: //down arrow
+	  if (!this.shown) this.lookup()
+	  break
 
         default:
           this.clearTarget()
